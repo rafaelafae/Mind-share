@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  owner
+  admin
+  member
+  viewer
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Ideas    Idea[]
+  Votes    Vote[]
+  Comments Comment[]
+
+  role Role @default(member)
+
+  @@map("users")
+}
+
+model Idea {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  Votes    Vote[]
+  Comments Comment[]
+
+  @@map("ideas")
+}
+
+model Vote {
+  id     String @id @default(uuid())
+  userId String
+  ideaId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ideaId])
+  @@map("votes")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  ideaId    String
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  idea   Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
